@@ -1,0 +1,132 @@
+
+
+services:
+  cassandra:
+    image: cassandra:4.0
+    container_name: cassandra-db
+    ports:
+      - "9042:9042"
+    networks:
+      - app-network
+    environment:
+      - CASSANDRA_CLUSTER_NAME=earthquake-cluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "DESCRIBE KEYSPACES" ]
+      interval: 10s
+      retries: 10
+      start_period: 60s
+      timeout: 10s
+    volumes:
+      - cassandra-data:/var/lib/cassandra  # Kalıcı veri saklamak için volume
+
+  init-keyspace:
+    image: cassandra:4.0
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - ./earthquake-app/create-keyspace.sh:/create-keyspace.sh
+    entrypoint: [ "bash",  "/create-keyspace.sh" ]
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+    networks:
+      - app-network
+
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    ports:
+      - "9092:9092"
+    expose:
+      - "9093"
+    networks:
+      - app-network
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+  jobmanager:
+    image: flink:latest
+    depends_on:
+      - app
+    command:
+      - jobmanager
+    ports:
+      - "8081:8081"
+      - "6123:6123"
+    networks:
+      - app-network
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+
+  job-runner:
+    build:
+      context:  ./earthquake-job
+    depends_on:
+      - jobmanager
+    networks:
+      - app-network
+    command: flink run -d -m jobmanager:8081 /opt/flink/usrlib/job.jar
+
+
+  taskmanager:
+    image: flink:latest
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    networks:
+      - app-network
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+
+  app:
+    build: ./earthquake-app
+    container_name: earthquake-app
+    depends_on:
+      - init-keyspace
+      - zookeeper
+      - kafka
+    networks:
+      - app-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATA_CASSANDRA_CONTACT_POINTS=cassandra
+      - SPRING_DATA_CASSANDRA_PORT=9042
+      - FLINK_HOST = localhost
+    ports:
+      - "8086:8086"
+  ui-earthquake:
+    build:
+      context: ./ui-earthquake
+    ports:
+      - "3000:80"
+    depends_on:
+      - jobmanager
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  cassandra-data:
