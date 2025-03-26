@@ -1,8 +1,10 @@
-# 🌍 Earthquake DataStream Processing System
+# 🌍 Real-time Earthquake DataStream Processing System
 
 ## 📌 Overview
-This is a **Mono Repo** containing a **Real-time Earthquake Monitoring System**. The system generates random earthquake data,sends it to**Kafka**, processes it through **Flink**, and sends anomalies to **Kafka**. The backend serves as a Rest API for starting generation and database operations WebSocket publisher,   while the frontend visualizes the data using **React**.
-Flink marks an earthquake as an anomaly if its magnitude is high and if more than two earthquakes occured close to each other within a specified perimeter in the last three minutes.
+The system generates random earthquake data and sends it to **Kafka**, processes it through **Flink**, and sends anomalies to **Kafka**. The backend serves as a Rest API for starting/stopping data generation and database operations, WebSocket publisher, while the frontend visualizes the data using **React**.
+Flink marks an earthquake as an anomaly if its magnitude is high and if more than two earthquakes occured close to each other within a specified perimeter in the specified time interval.
+
+![Flow Diagram](https://drive.google.com/uc?export=view&id=14mIbS2gLxSuKPbepr56UsOfL5PCt8Te4)
 
 ## 🚀 Tech Stack
 
@@ -18,7 +20,7 @@ Flink marks an earthquake as an anomaly if its magnitude is high and if more tha
 ### **1️⃣ Clone the Repository**
 ```bash
 git clone https://github.com/fatihgoncagul/earthquake-processing-system.git
-cd earthquake-monitoring-system
+cd earthquake-processing-system
 ```
 
 ### **2️⃣ Start Services with Docker Compose**
