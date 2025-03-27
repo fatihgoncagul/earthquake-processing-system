@@ -5,7 +5,7 @@ The system generates random earthquake data and sends it to **Kafka**, processes
 Flink marks an earthquake as an anomaly if its magnitude is high and if more than two earthquakes occured close to each other within a specified perimeter in the specified time interval.
 
 ![Flow Diagram](https://drive.google.com/uc?export=view&id=14mIbS2gLxSuKPbepr56UsOfL5PCt8Te4)
-
+![User Interface](https://drive.google.com/uc?export=view&id=1CQ1_HpE4H3Y3f2_M1jSOc0bWIucjZAPN)
 ## 🚀 Tech Stack
 
 - Java & Spring Boot
