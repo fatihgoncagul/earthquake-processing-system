@@ -111,7 +111,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATA_CASSANDRA_CONTACT_POINTS=cassandra
       - SPRING_DATA_CASSANDRA_PORT=9042
-      - FLINK_HOST = localhost
+      - FLINK_HOST=localhost
     ports:
       - "8086:8086"
   ui-earthquake:
